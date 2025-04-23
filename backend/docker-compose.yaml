@@ -65,7 +65,21 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - app-network
-
+  nginx:
+    image: nginx:latest
+    restart: always
+    ports:
+      - "8081:80"  # Используем порт 8081 вместо 80
+      - "8444:443"  # Используем порт 8444 вместо 443
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - static_volume:/var/www/static
+      - media_volume:/var/www/media
+    depends_on:
+      - backend
+    networks:
+      - app-network
 volumes:
   postgres_data:
   static_volume:
