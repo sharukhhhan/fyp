@@ -8,6 +8,46 @@ services:
       - "${PORT:-8000}:8000"
     depends_on:
       - db
+    environment:
+      # Django Settings
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG:-False}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      
+      # Database Settings
+      - DB_NAME=${DB_NAME:-notary_db}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-12345}
+      - DB_HOST=db
+      - DB_PORT=${DB_PORT:-5432}
+      
+      # Email Settings
+      - EMAIL_HOST=${EMAIL_HOST:-smtp.gmail.com}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-True}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-noreply@notary.com}
+      
+      # AWS S3 Settings
+      - USE_S3=${USE_S3:-True}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
+      - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME}
+      
+      # Fernet
+      - FERNET_KEY=${FERNET_KEY}
+      
+      # AI Service API
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AI_SERVICE_API_URL=${AI_SERVICE_API_URL:-https://api.openai.com/v1}
+      - AI_SERVICE_API_KEY=${AI_SERVICE_API_KEY}
+      
+      # Video Conference Settings
+      - VIDEO_CONFERENCE_BASE_URL=${VIDEO_CONFERENCE_BASE_URL}
+      - VIDEO_CONFERENCE_DOMAIN=${VIDEO_CONFERENCE_DOMAIN}
+      - VIDEO_CONFERENCE_SECRET=${VIDEO_CONFERENCE_SECRET}
     volumes:
       - static_volume:/app/static
       - media_volume:/app/media
