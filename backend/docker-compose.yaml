@@ -5,7 +5,7 @@ services:
     build: .
     restart: always
     ports:
-      - "${PORT:-8000}:8000"
+      - "8000:8000"
     depends_on:
       - db
     environment:
@@ -63,22 +63,6 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD:-12345}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - app-network
-
-  nginx:
-    image: nginx:latest
-    restart: always
-    ports:
-      - "8081:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/ssl:/etc/nginx/ssl
-      - static_volume:/var/www/static
-      - media_volume:/var/www/media
-    depends_on:
-      - backend
     networks:
       - app-network
 
