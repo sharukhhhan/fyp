@@ -354,31 +354,3 @@ class IdentityDocument(models.Model):
     def __str__(self):
         return f"{self.get_type_display()} - {self.user.email}"
     
-
-
-class GeneratedDocument(models.Model):
-    """Model for AI-generated documents based on templates"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='generated_documents'
-    )
-    title = models.CharField(_('title'), max_length=255)
-    content = models.TextField(_('content'))
-    file = models.FileField(
-        _('file'), 
-        upload_to='uploads/generated_documents/', 
-        null=True, 
-        blank=True
-    )
-    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
-    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
-    is_finalized = models.BooleanField(_('finalized'), default=False)
-    
-    class Meta:
-        verbose_name = _('generated document')
-        verbose_name_plural = _('generated documents')
-        
-    def __str__(self):
-        return f"{self.title} - {self.user.email}"

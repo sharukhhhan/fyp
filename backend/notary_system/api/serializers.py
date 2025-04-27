@@ -8,8 +8,7 @@ from .models import (
     VerificationRequest, 
     VideoSession, 
     SignedDocument,
-    IdentityDocument,
-    GeneratedDocument
+    IdentityDocument
 )
 
 User = get_user_model()
@@ -222,28 +221,3 @@ class SignedDocumentSerializer(serializers.ModelSerializer):
         if obj.signed_file and hasattr(obj.signed_file, 'url') and request:
             return request.build_absolute_uri(obj.signed_file.url)
         return None
-
-
-class GeneratedDocumentSerializer(serializers.ModelSerializer):
-    """Serializer for AI-generated documents"""
-    file_url = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = GeneratedDocument
-        fields = (
-            'id', 'user', 'title', 'content', 'file', 'file_url',
-            'created_at', 'updated_at', 'is_finalized'
-        )
-        read_only_fields = ('id', 'user', 'created_at', 'updated_at', 'file_url')
-    
-    def get_file_url(self, obj):
-        """Get the URL for the generated document file"""
-        request = self.context.get('request')
-        if obj.file and hasattr(obj.file, 'url') and request:
-            return request.build_absolute_uri(obj.file.url)
-        return None
-    
-    def create(self, validated_data):
-        """Create generated document and associate with current user"""
-        validated_data['user'] = self.context['request'].user
-        return super().create(validated_data)

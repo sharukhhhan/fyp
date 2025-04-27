@@ -77,7 +77,6 @@ from .models import (
     VideoSession,
     SignedDocument,
     IdentityDocument,
-    GeneratedDocument,
     NotaryProfile
 )
 from .serializers import (
@@ -91,8 +90,7 @@ from .serializers import (
     VerificationRequestListSerializer,
     VideoSessionSerializer,
     SignedDocumentSerializer,
-    IdentityDocumentSerializer,
-    GeneratedDocumentSerializer
+    IdentityDocumentSerializer
 )
 from .permissions import (
     IsOwner,

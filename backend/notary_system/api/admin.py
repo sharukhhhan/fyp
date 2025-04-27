@@ -10,7 +10,6 @@ from .models import (
     VideoSession,
     SignedDocument,
     IdentityDocument,
-    GeneratedDocument,
     NotaryProfile
 )
 
@@ -103,12 +102,3 @@ class IdentityDocumentAdmin(admin.ModelAdmin):
     list_filter = ('type', 'is_verified', 'created_at')
     search_fields = ('user__email', 'document_number', 'full_name')
     readonly_fields = ('created_at',)
-
-
-@admin.register(GeneratedDocument)
-class GeneratedDocumentAdmin(admin.ModelAdmin):
-    """Admin configuration for GeneratedDocument model"""
-    list_display = ('id', 'user', 'title', 'is_finalized', 'created_at', 'updated_at')
-    list_filter = ('is_finalized', 'created_at')
-    search_fields = ('title', 'user__email', 'content')
-    readonly_fields = ('created_at', 'updated_at')

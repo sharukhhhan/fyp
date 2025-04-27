@@ -66,6 +66,7 @@ jobs:
             VIDEO_CONFERENCE_BASE_URL="${{ secrets.VIDEO_CONFERENCE_BASE_URL }}" \
             VIDEO_CONFERENCE_DOMAIN="${{ secrets.VIDEO_CONFERENCE_DOMAIN }}" \
             VIDEO_CONFERENCE_SECRET="${{ secrets.VIDEO_CONFERENCE_SECRET }}" \
+            SERVER_PORT=${SERVER_PORT:-8080} \
             docker-compose down
             
             SECRET_KEY="${{ secrets.SECRET_KEY }}" \
@@ -94,6 +95,7 @@ jobs:
             VIDEO_CONFERENCE_BASE_URL="${{ secrets.VIDEO_CONFERENCE_BASE_URL }}" \
             VIDEO_CONFERENCE_DOMAIN="${{ secrets.VIDEO_CONFERENCE_DOMAIN }}" \
             VIDEO_CONFERENCE_SECRET="${{ secrets.VIDEO_CONFERENCE_SECRET }}" \
+            SERVER_PORT=${SERVER_PORT:-8080} \
             docker-compose up -d --build
             
             # Очистка
