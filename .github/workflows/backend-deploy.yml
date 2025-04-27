@@ -40,33 +40,6 @@ jobs:
             cd ~/app/backend
             
             # Запуск docker-compose с переменными
-            SECRET_KEY="${{ secrets.SECRET_KEY }}" \
-            DEBUG="${{ secrets.DEBUG }}" \
-            ALLOWED_HOSTS="${{ secrets.ALLOWED_HOSTS }}" \
-            DB_NAME="${{ secrets.DB_NAME }}" \
-            DB_USER="${{ secrets.DB_USER }}" \
-            DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
-            DB_HOST="${{ secrets.DB_HOST }}" \
-            DB_PORT="${{ secrets.DB_PORT }}" \
-            EMAIL_HOST="${{ secrets.EMAIL_HOST }}" \
-            EMAIL_PORT="${{ secrets.EMAIL_PORT }}" \
-            EMAIL_USE_TLS="${{ secrets.EMAIL_USE_TLS }}" \
-            EMAIL_HOST_USER="${{ secrets.EMAIL_HOST_USER }}" \
-            EMAIL_HOST_PASSWORD="${{ secrets.EMAIL_HOST_PASSWORD }}" \
-            DEFAULT_FROM_EMAIL="${{ secrets.DEFAULT_FROM_EMAIL }}" \
-            USE_S3="${{ secrets.USE_S3 }}" \
-            AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
-            AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
-            AWS_STORAGE_BUCKET_NAME="${{ secrets.AWS_STORAGE_BUCKET_NAME }}" \
-            AWS_S3_REGION_NAME="${{ secrets.AWS_S3_REGION_NAME }}" \
-            FERNET_KEY="${{ secrets.FERNET_KEY }}" \
-            OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
-            AI_SERVICE_API_URL="${{ secrets.AI_SERVICE_API_URL }}" \
-            AI_SERVICE_API_KEY="${{ secrets.AI_SERVICE_API_KEY }}" \
-            VIDEO_CONFERENCE_BASE_URL="${{ secrets.VIDEO_CONFERENCE_BASE_URL }}" \
-            VIDEO_CONFERENCE_DOMAIN="${{ secrets.VIDEO_CONFERENCE_DOMAIN }}" \
-            VIDEO_CONFERENCE_SECRET="${{ secrets.VIDEO_CONFERENCE_SECRET }}" \
-            SERVER_PORT=${SERVER_PORT:-8080} \
             docker-compose down
             
             SECRET_KEY="${{ secrets.SECRET_KEY }}" \
@@ -95,7 +68,7 @@ jobs:
             VIDEO_CONFERENCE_BASE_URL="${{ secrets.VIDEO_CONFERENCE_BASE_URL }}" \
             VIDEO_CONFERENCE_DOMAIN="${{ secrets.VIDEO_CONFERENCE_DOMAIN }}" \
             VIDEO_CONFERENCE_SECRET="${{ secrets.VIDEO_CONFERENCE_SECRET }}" \
-            SERVER_PORT=${SERVER_PORT:-8080} \
+            SERVER_PORT="${{ secrets.SERVER_PORT }}" \
             docker-compose up -d --build
             
             # Очистка
