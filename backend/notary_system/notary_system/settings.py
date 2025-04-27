@@ -19,7 +19,7 @@ SERVER_PORT = os.environ.get('SERVER_PORT', '8081')
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 FORCE_SCRIPT_NAME = '/notary'
-STATIC_URL = '/notary/static/'
+STATIC_URL = '/static/'
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
