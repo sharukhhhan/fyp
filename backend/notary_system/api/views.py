@@ -1299,3 +1299,50 @@ class AIChatView(APIView):
             'message': 'Сессия успешно завершена',
             'operation': 'end'
         })
+
+from rest_framework_simplejwt.tokens import TokenError, RefreshToken
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+
+# Add this class to your views.py
+class LogoutView(APIView):
+    """
+    View for logging out users by blacklisting their refresh token
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            # Get the refresh token from request data
+            refresh_token = request.data.get('refresh_token')
+            
+            if not refresh_token:
+                return Response(
+                    {'error': 'Refresh token is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Create RefreshToken instance
+            token = RefreshToken(refresh_token)
+            
+            # Blacklist the token
+            token.blacklist()
+
+            # Log out successful
+            return Response(
+                {'message': 'Successfully logged out'},
+                status=status.HTTP_200_OK
+            )
+            
+        except TokenError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': 'Failed to logout. Please try again.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

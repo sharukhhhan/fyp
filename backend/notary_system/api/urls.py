@@ -12,7 +12,8 @@ from .views import (
     VideoSessionViewSet,
     SignedDocumentViewSet,
     IdentityDocumentViewSet,
-    AIChatView
+    AIChatView,
+    LogoutView  # Add this import
 )
 
 # Create a router and register our viewsets
@@ -28,6 +29,7 @@ urlpatterns = [
     # Authentication endpoints
     path('register/', RegisterUserView.as_view(), name='register'),
     path('login/', CustomTokenObtainPairView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),  # Add this line
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     # User profile
