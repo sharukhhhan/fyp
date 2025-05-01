@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, StyleProp, ViewStyle, View } from 'react-native';
 import Colors from '@/constants/Colors';
 import { ReactNode } from 'react';
 

@@ -4,20 +4,17 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppHeader from '@/components/AppHeader';
 import DashboardCard from '@/components/DashboardCard';
-import MeetingCard from '@/components/MeetingCard';
 import ActionButton from '@/components/ActionButton';
 import { useAuth } from '@/context/AuthContext';
 import Colors from '@/constants/Colors';
 import { Plus } from 'lucide-react-native';
 import { router } from 'expo-router';
-import { getMeetings } from '@/services/meetingService';
 import { getDocuments } from '@/services/documentService';
-import { Meeting, Document } from '@/types';
+import { Document } from '@/types';
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const [recentDocuments, setRecentDocuments] = useState<Document[]>([]);
-  const [upcomingMeetings, setUpcomingMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,10 +23,6 @@ export default function HomeScreen() {
         // Fetch recent documents
         const documents = await getDocuments({ limit: 3 });
         setRecentDocuments(documents);
-
-        // Fetch upcoming meetings
-        const meetings = await getMeetings({ upcoming: true, limit: 3 });
-        setUpcomingMeetings(meetings);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -73,30 +66,6 @@ export default function HomeScreen() {
             icon={<Plus size={24} color="#fff" />}
             label="New Document"
             onPress={handleNewDocument}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Upcoming Meetings</Text>
-          {upcomingMeetings.length > 0 ? (
-            upcomingMeetings.map((meeting, index) => (
-              <MeetingCard 
-                key={meeting.id || index}
-                title={meeting.title}
-                date={new Date(meeting.scheduledTime)}
-                notaryName={meeting.notaryName}
-                onPress={() => router.push(`/meeting/${meeting.id}`)}
-              />
-            ))
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No upcoming meetings</Text>
-            </View>
-          )}
-          <ActionButton 
-            label="Schedule Meeting"
-            onPress={() => router.push('/meeting/schedule')}
-            variant="secondary"
           />
         </View>
       </ScrollView>

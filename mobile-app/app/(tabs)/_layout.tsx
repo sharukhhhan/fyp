@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { useColorScheme } from 'react-native';
-import { Chrome as Home, FileText, Calendar, User } from 'lucide-react-native';
+import { Chrome as Home, FileText, User } from 'lucide-react-native';
 import Colors from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 import { router } from 'expo-router';
@@ -39,13 +39,6 @@ export default function TabLayout() {
         options={{
           title: 'Documents',
           tabBarIcon: ({ color, size }) => <FileText size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="meetings"
-        options={{
-          title: 'Meetings',
-          tabBarIcon: ({ color, size }) => <Calendar size={size} color={color} />,
         }}
       />
       <Tabs.Screen
