@@ -254,10 +254,6 @@ const LoginScreen = ({ navigation }) => {
           
           <ErrorMessage errorText={error} />
           
-          <RNText style={{color: 'gray', fontSize: 10, textAlign: 'center'}}>
-            Error state: {error ? `"${error}"` : 'none'} (update: {forceUpdate})
-          </RNText>
-          
           <Button
             mode="contained"
             onPress={handleLogin}

@@ -39,10 +39,19 @@ const theme = {
     primary: '#3498db',
     accent: '#f1c40f',
     background: '#ffffff',
+    surface: '#ffffff',
+    text: '#000000',
+    error: '#e74c3c',
+    disabled: '#95a5a6',
+    placeholder: '#bdc3c7',
+    backdrop: 'rgba(0, 0, 0, 0.5)',
+    notification: '#e74c3c',
+  },
+  roundness: 8,
+  animation: {
+    scale: 1.0,
   },
 };
-
-
 
 // Document stack navigator
 function DocumentsStack() {

@@ -38,7 +38,8 @@ const SignaturePad = ({ onSave, onCancel }) => {
                  .m-signature-pad {border: none; box-shadow: none;}
                  body,html {
                    width: 100%; height: 100%;
-                 }`;
+                 }
+                 .signature-pad {box-shadow: 0 1px 3px rgba(0,0,0,0.1);}`;
 
   return (
     <View style={styles.container}>

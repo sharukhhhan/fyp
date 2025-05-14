@@ -19,9 +19,8 @@ export const AuthProvider = ({ children }) => {
       try {
         await clearAuthData();
         setUser(null);
-        //todo: remove this
-        // const storedUser = await AsyncStorage.getItem('user');
-        // const storedToken = await AsyncStorage.getItem('token');
+        const storedUser = await AsyncStorage.getItem('user');
+        const storedToken = await AsyncStorage.getItem('token');
         
         if (storedUser && storedToken) {
           setUser(JSON.parse(storedUser));

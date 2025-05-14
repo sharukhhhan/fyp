@@ -15,13 +15,16 @@ import {
   Headline, 
   Subheading,
   HelperText,
-  Checkbox
+  Checkbox,
+  RadioButton,
+  Portal,
+  Modal,
+  useTheme
 } from 'react-native-paper';
+import * as DocumentPicker from 'expo-document-picker';
 import { useAuth } from '../contexts/AuthContext';
 
 const RegisterScreen = ({ navigation }) => {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -29,8 +32,26 @@ const RegisterScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [documentType, setDocumentType] = useState('');
+  const [documentFile, setDocumentFile] = useState(null);
+  
+  // Common document fields
+  const [surname, setSurname] = useState('');
+  const [name, setName] = useState('');
+  const [patronym, setPatronym] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [documentNumber, setDocumentNumber] = useState('');
+  const [issueDate, setIssueDate] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  
+  // ID Card specific fields
+  const [sex, setSex] = useState('');
+  const [placeOfBirth, setPlaceOfBirth] = useState('');
+  const [authority, setAuthority] = useState('');
+  const [personalNumber, setPersonalNumber] = useState('');
   
   const { register } = useAuth();
+  const theme = useTheme();
   
   // Validate email format
   const isEmailValid = () => {
@@ -43,16 +64,27 @@ const RegisterScreen = ({ navigation }) => {
     return password.length >= 8 && /\d/.test(password) && /[a-zA-Z]/.test(password);
   };
 
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/pdf',
+        copyToCacheDirectory: true
+      });
+      
+      if (result.type === 'success') {
+        setDocumentFile(result);
+      }
+    } catch (err) {
+      setError('Error picking document');
+    }
+  };
+
   // Handle registration
   const handleRegister = async () => {
     // Reset error
     setError('');
     
     // Validate inputs
-    if (!firstName.trim() || !lastName.trim()) {
-      setError('First name and last name are required');
-      return;
-    }
     
     if (!email.trim()) {
       setError('Email is required');
@@ -83,15 +115,52 @@ const RegisterScreen = ({ navigation }) => {
       setError('You must agree to the Terms of Service and Privacy Policy');
       return;
     }
+
+    if (!documentType) {
+      setError('Please select an identification document type');
+      return;
+    }
+
+    if (!documentFile) {
+      setError('Please upload your identification document');
+      return;
+    }
+
+    if (!documentNumber) {
+      setError('Document number is required');
+      return;
+    }
     
     try {
       setIsLoading(true);
       
+      // Prepare common document data
+      const documentData = {
+        surname,
+        name,
+        patronym,
+        dateOfBirth,
+        documentNumber,
+        issueDate,
+        expiryDate
+      };
+      
+      // Add specific fields based on document type
+      if (documentType === 'idCard') {
+        Object.assign(documentData, {
+          sex,
+          placeOfBirth,
+          authority,
+          personalNumber
+        });
+      }
+      
       const userData = {
-        firstName,
-        lastName,
         email,
-        password
+        password,
+        documentType,
+        documentData,
+        documentFile
       };
       
       const success = await register(userData);
@@ -128,25 +197,6 @@ const RegisterScreen = ({ navigation }) => {
         </View>
         
         <View style={styles.formContainer}>
-          <View style={styles.nameRow}>
-            <TextInput
-              label="First Name"
-              value={firstName}
-              onChangeText={setFirstName}
-              mode="outlined"
-              style={styles.nameInput}
-              disabled={isLoading}
-            />
-            
-            <TextInput
-              label="Last Name"
-              value={lastName}
-              onChangeText={setLastName}
-              mode="outlined"
-              style={styles.nameInput}
-              disabled={isLoading}
-            />
-          </View>
           
           <TextInput
             label="Email"
@@ -187,6 +237,192 @@ const RegisterScreen = ({ navigation }) => {
             error={error && error.includes('Passwords do not match')}
             disabled={isLoading}
           />
+
+          {/* Document Selection */}
+          <View style={styles.documentSection}>
+            <Text style={styles.sectionTitle}>Identity Verification</Text>
+            
+            <RadioButton.Group onValueChange={value => setDocumentType(value)} value={documentType}>
+              <View style={styles.radioOptionsContainer}>
+                <TouchableOpacity 
+                  style={[
+                    styles.radioOptionButton,
+                    documentType === 'idCard' && styles.radioOptionSelected
+                  ]}
+                  onPress={() => setDocumentType('idCard')}
+                >
+                  <RadioButton.Android
+                    value="idCard"
+                    color={theme.colors.primary}
+                  />
+                  <Text style={styles.radioOptionText}>ID Card</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[
+                    styles.radioOptionButton,
+                    documentType === 'driverLicense' && styles.radioOptionSelected
+                  ]}
+                  onPress={() => setDocumentType('driverLicense')}
+                >
+                  <RadioButton.Android
+                    value="driverLicense"
+                    color={theme.colors.primary}
+                  />
+                  <Text style={styles.radioOptionText}>Driver's License</Text>
+                </TouchableOpacity>
+              </View>
+            </RadioButton.Group>
+
+            {documentType && (
+              <>
+                <View style={styles.documentFieldsContainer}>
+                  <TextInput
+                    label="Surname"
+                    value={surname}
+                    onChangeText={setSurname}
+                    mode="outlined"
+                    style={styles.input}
+                    disabled={isLoading}
+                  />
+                  <TextInput
+                    label="Name"
+                    value={name}
+                    onChangeText={setName}
+                    mode="outlined"
+                    style={styles.input}
+                    disabled={isLoading}
+                  />
+                  <TextInput
+                    label="Patronym (optional)"
+                    value={patronym}
+                    onChangeText={setPatronym}
+                    mode="outlined"
+                    style={styles.input}
+                    disabled={isLoading}
+                  />
+                  <TextInput
+                    label="Date of Birth"
+                    value={dateOfBirth}
+                    onChangeText={setDateOfBirth}
+                    mode="outlined"
+                    style={styles.input}
+                    placeholder="YYYY-MM-DD"
+                    disabled={isLoading}
+                  />
+                  <TextInput
+                    label="Document Number"
+                    value={documentNumber}
+                    onChangeText={setDocumentNumber}
+                    mode="outlined"
+                    style={styles.input}
+                    disabled={isLoading}
+                  />
+
+                  {documentType === 'idCard' && (
+                    <>
+                      <View style={styles.radioRow}>
+                        <Text style={styles.radioLabel}>Sex:</Text>
+                        <RadioButton.Group onValueChange={value => setSex(value)} value={sex}>
+                          <View style={styles.sexOptionsContainer}>
+                            <View style={styles.sexOption}>
+                              <RadioButton value="male" />
+                              <Text>Male</Text>
+                            </View>
+                            <View style={styles.sexOption}>
+                              <RadioButton value="female" />
+                              <Text>Female</Text>
+                            </View>
+                          </View>
+                        </RadioButton.Group>
+                      </View>
+                      
+                      <TextInput
+                        label="Place of Birth"
+                        value={placeOfBirth}
+                        onChangeText={setPlaceOfBirth}
+                        mode="outlined"
+                        style={styles.input}
+                        disabled={isLoading}
+                      />
+                      <TextInput
+                        label="Authority"
+                        value={authority}
+                        onChangeText={setAuthority}
+                        mode="outlined"
+                        style={styles.input}
+                        disabled={isLoading}
+                      />
+                      <TextInput
+                        label="Date of Issue"
+                        value={issueDate}
+                        onChangeText={setIssueDate}
+                        mode="outlined"
+                        style={styles.input}
+                        placeholder="YYYY-MM-DD"
+                        disabled={isLoading}
+                      />
+                      <TextInput
+                        label="Date of Expiry"
+                        value={expiryDate}
+                        onChangeText={setExpiryDate}
+                        mode="outlined"
+                        style={styles.input}
+                        placeholder="YYYY-MM-DD"
+                        disabled={isLoading}
+                      />
+                      <TextInput
+                        label="Personal Number"
+                        value={personalNumber}
+                        onChangeText={setPersonalNumber}
+                        mode="outlined"
+                        style={styles.input}
+                        disabled={isLoading}
+                      />
+                    </>
+                  )}
+
+                  {documentType === 'driverLicense' && (
+                    <>
+                      <TextInput
+                        label="Date of Issue"
+                        value={issueDate}
+                        onChangeText={setIssueDate}
+                        mode="outlined"
+                        style={styles.input}
+                        placeholder="YYYY-MM-DD"
+                        disabled={isLoading}
+                      />
+                      <TextInput
+                        label="Date of Expiry"
+                        value={expiryDate}
+                        onChangeText={setExpiryDate}
+                        mode="outlined"
+                        style={styles.input}
+                        placeholder="YYYY-MM-DD"
+                        disabled={isLoading}
+                      />
+                    </>
+                  )}
+                </View>
+
+                <Button
+                  mode="outlined"
+                  onPress={pickDocument}
+                  style={styles.uploadButton}
+                  disabled={isLoading}
+                >
+                  {documentFile ? 'Document Selected' : 'Upload PDF Document'}
+                </Button>
+
+                {documentFile && (
+                  <Text style={styles.fileName}>
+                    Selected: {documentFile.name}
+                  </Text>
+                )}
+              </>
+            )}
+          </View>
           
           <View style={styles.checkboxContainer}>
             <Checkbox
@@ -269,15 +505,6 @@ const styles = StyleSheet.create({
   formContainer: {
     marginBottom: 24,
   },
-  nameRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  nameInput: {
-    flex: 1,
-    marginRight: 8,
-  },
   input: {
     marginBottom: 16,
   },
@@ -310,6 +537,86 @@ const styles = StyleSheet.create({
     color: '#3498db',
     fontWeight: 'bold',
   },
+  radioButtonContainer: {
+    marginBottom: 16,
+  },
+  radioButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  uploadButton: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  documentSection: {
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  radioOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  fileName: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
+  radioOptionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  radioOptionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    marginBottom: 8,
+    backgroundColor: '#fff',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  },
+  radioOptionSelected: {
+    borderColor: '#3498db',
+    backgroundColor: '#3498db10',
+  },
+  radioOptionText: {
+    marginLeft: 8,
+    fontSize: 16,
+  },
+  documentFieldsContainer: {
+    marginTop: 8,
+  },
+  radioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  radioLabel: {
+    marginRight: 16,
+    fontSize: 16,
+  },
+  sexOptionsContainer: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  sexOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 24,
+  },
 });
 
-export default RegisterScreen;
+export default function RegisterScreenWrapper(props) {
+  const theme = useTheme();
+  return <RegisterScreen {...props} theme={theme} />;
+}
