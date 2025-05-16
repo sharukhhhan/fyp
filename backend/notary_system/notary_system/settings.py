@@ -18,7 +18,7 @@ USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SERVER_PORT = os.environ.get('SERVER_PORT', '8081')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 CSRF_TRUSTED_ORIGINS = ['https://3.92.108.217']
 # FORCE_SCRIPT_NAME = '/notary'
 STATIC_URL = '/static/' 
