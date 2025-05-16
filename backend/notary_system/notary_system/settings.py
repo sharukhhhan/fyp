@@ -20,7 +20,7 @@ SERVER_PORT = os.environ.get('SERVER_PORT', '8081')
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 CSRF_TRUSTED_ORIGINS = ['https://3.92.108.217']
-# FORCE_SCRIPT_NAME = '/notary'
+FORCE_SCRIPT_NAME = '/notary'
 STATIC_URL = '/static/' 
 STATIC_ROOT = '/app/staticfiles/'
 # Application definition
