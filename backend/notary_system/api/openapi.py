@@ -109,7 +109,7 @@ class OpenAIDocumentService:
             system_prompt = self.create_system_prompt(user_data, document_type, language)
             
             # Новый JSON-инструктаж
-            """
+            instruction = """
 Отвечай ТОЛЬКО в этом JSON-формате:
 {
   "is_ready": true | false,
