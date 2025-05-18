@@ -1055,14 +1055,14 @@ class AIChatView(APIView):
             return False
     
     def _replace_placeholders(self, text, user_data):
-    return (
-        text
-        .replace("{{full_name}}", user_data['full_name'])
-        .replace("{{document_number}}", user_data['document_number'])
-        .replace("{{date_of_birth}}", user_data['date_of_birth'])
-        .replace("{{issue_date}}", user_data['issue_date'])
-        .replace("{{expiry_date}}", user_data['expiry_date'] or "")
-    )
+        return (
+            text
+            .replace("{{full_name}}", user_data['full_name'])
+            .replace("{{document_number}}", user_data['document_number'])
+            .replace("{{date_of_birth}}", user_data['date_of_birth'])
+            .replace("{{issue_date}}", user_data['issue_date'])
+            .replace("{{expiry_date}}", user_data['expiry_date'] or "")
+        )
 
     def _handle_finalize_document(self, request, session_id, session_data):
         """Финализация документа: пометить как готовый и завершить сессию"""
