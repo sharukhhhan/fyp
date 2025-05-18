@@ -863,9 +863,6 @@ class AIChatView(APIView):
             'session_id': session_id,
             'document_id': session_data.get('document_id'),
             'is_ready': result['is_ready'],
-            'missing_info': result['missing_info'],
-            'remarks': result['remarks'],
-            'warnings': result['warnings'],
             'operation': 'chat'
         })
 
