@@ -172,6 +172,11 @@ export default {
   documentCreated: 'Документ создан',
   documentSaved: 'Ваш документ был успешно создан и сохранен.',
   createDocument: 'Создать документ',
+  welcomeMessage: 'Здравствуйте! Я ваш ИИ-ассистент по документам. Как я могу помочь вам создать документ сегодня?',
+  aiServiceError: 'Ошибка ИИ-сервиса. Пожалуйста, попробуйте позже.',
+  missingData: 'Не хватает данных',
+  finalizeDocument: 'Финализировать документ',
+  finalizationFailed: 'Не удалось финализировать документ. Пожалуйста, попробуйте снова.',
   
   // Document Options Screen
   createNewDocument: 'Создать новый документ',

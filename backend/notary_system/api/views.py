@@ -1054,6 +1054,16 @@ class AIChatView(APIView):
             logger.exception(f"Error generating PDF: {str(e)}")
             return False
     
+    def _replace_placeholders(self, text, user_data):
+    return (
+        text
+        .replace("{{full_name}}", user_data['full_name'])
+        .replace("{{document_number}}", user_data['document_number'])
+        .replace("{{date_of_birth}}", user_data['date_of_birth'])
+        .replace("{{issue_date}}", user_data['issue_date'])
+        .replace("{{expiry_date}}", user_data['expiry_date'] or "")
+    )
+
     def _handle_finalize_document(self, request, session_id, session_data):
         """Финализация документа: пометить как готовый и завершить сессию"""
         document_id = session_data.get('document_id')
@@ -1071,12 +1081,35 @@ class AIChatView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+
         # Проверка, действительно ли документ готов
         if not session_data.get('document_content'):
             return Response(
                 {'error': 'Документ не готов для финализации'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        identity_document = IdentityDocument.objects.filter(user=request.user, is_verified=True).first()
+        if not identity_document:
+            return Response({'error': 'Пользовательский документ не найден'}, status=400)
+
+        user_data = {
+            'full_name': identity_document.full_name,
+            'document_number': identity_document.document_number,
+            'date_of_birth': identity_document.date_of_birth.isoformat(),
+            'issue_date': identity_document.issue_date.isoformat(),
+            'expiry_date': identity_document.expiry_date.isoformat() if identity_document.expiry_date else None
+        }
+
+        # Подставляем значения
+        finalized_content = self._replace_placeholders(session_data['document_content'], user_data)
+        document.generation_history.append({
+            'timestamp': timezone.now().isoformat(),
+            'prompt': 'Финализация документа',
+            'content': finalized_content,
+            'action': 'finalize',
+            'language': session_data.get('language', 'ru')
+        })
 
         document.is_finalized = True
         document.finalized_at = timezone.now()

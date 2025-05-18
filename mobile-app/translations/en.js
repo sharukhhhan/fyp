@@ -160,6 +160,11 @@ export default {
   documentCreated: 'Document Created',
   documentSaved: 'Your document has been successfully created and saved.',
   createDocument: 'Create Document',
+  welcomeMessage: 'Hello! I am your AI document assistant. How can I help you create your document today?',
+  aiServiceError: 'AI service error. Please try again later.',
+  missingData: 'Missing information',
+  finalizeDocument: 'Finalize Document',
+  finalizationFailed: 'Failed to finalize the document. Please try again.',
   
   // Document Options Screen
   createNewDocument: 'Create a New Document',
