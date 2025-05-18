@@ -172,6 +172,11 @@ export default {
   documentCreated: 'Документ түзүлдү',
   documentSaved: 'Документиңиз ийгиликтүү түзүлүп сакталды.',
   createDocument: 'Документ түзүү',
+  welcomeMessage: 'Салам! Мен сиздин ЖИ документ жардамчыңызмын. Бүгүн сизге документ түзүүгө кандай жардам бере алам?',
+  aiServiceError: 'ЖИ кызматында ката. Кайра аракет кылып көрүңүз.',
+  missingData: 'Жетишпеген маалымат',
+  finalizeDocument: 'Документти бүткөрүү',
+  finalizationFailed: 'Документти бүткөрүү ишке ашпады. Кайра аракет кылып көрүңүз.',
   
   // Document Options Screen
   createNewDocument: 'Жаңы документ түзүү',

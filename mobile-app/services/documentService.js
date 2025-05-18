@@ -324,3 +324,25 @@ export const requestNotarization = async (id, notarizationData) => {
     throw error;
   }
 };
+
+// AI Chat with backend
+
+export const chatWithAI = async (payload) => {
+  try {
+    const response = await api.post('/api/ai-chat/', payload);
+    console.log("AI chat payload:", payload);
+    console.log('AI chat response:', response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error('Error in AI chat:', error);
+    if (error.response && error.response.data) {
+      const errorMessage = error.response.data.detail ||
+        error.response.data.message ||
+        JSON.stringify(error.response.data);
+      throw new Error(errorMessage);
+    }
+    throw new Error('Failed to communicate with AI: Network or server error');
+  }
+};
+

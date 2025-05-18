@@ -35,7 +35,7 @@ if (Platform.OS === 'ios') {
 }
 
 // Create axios instance with the configuration
-const api = axios.create(axiosConfig);
+export const api = axios.create(axiosConfig);
 
 // Request interceptor for handling document downloads
 api.interceptors.request.use(
