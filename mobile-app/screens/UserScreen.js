@@ -20,12 +20,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useDocuments } from '../contexts/DocumentContext';
+import { useLocalization } from '../contexts/LocalizationContext';
 import LoadingIndicator from '../components/LoadingIndicator';
+import LanguageSelector from '../components/LanguageSelector';
 
 const UserScreen = ({ navigation }) => {
   const theme = useTheme();
   const { user, logout } = useAuth();
   const { documents } = useDocuments();
+  const { t } = useLocalization();
   
   const [isLoading, setIsLoading] = useState(false);
   const [recentDocuments, setRecentDocuments] = useState([]);
@@ -48,25 +51,25 @@ const UserScreen = ({ navigation }) => {
   // Handle logout
   const handleLogout = async () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
+      t('logout'),
+      t('logoutConfirmation'),
       [
         {
-          text: 'Cancel',
+          text: t('cancel'),
           style: 'cancel',
         },
         {
-          text: 'Logout',
+          text: t('logout'),
           onPress: async () => {
             setIsLoading(true);
             try {
               const success = await logout();
               if (!success) {
-                Alert.alert('Error', 'Failed to logout. Please try again.');
+                Alert.alert(t('error'), t('logoutFailed'));
               }
             } catch (error) {
               console.error('Logout error:', error);
-              Alert.alert('Error', 'Failed to logout. Please try again.');
+              Alert.alert(t('error'), t('logoutFailed'));
             } finally {
               setIsLoading(false);
             }
@@ -93,10 +96,11 @@ const UserScreen = ({ navigation }) => {
 
   // Get user initials for avatar
   const getUserInitials = () => {
-    if (!user) return 'U';
+    if (!user || !user.full_name) return 'U';
     
-    const firstName = user.firstName || '';
-    const lastName = user.lastName || '';
+    const names = user.full_name.split(' ');
+    const firstName = names[0] || '';
+    const lastName = names[1] || '';
     
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
@@ -120,20 +124,22 @@ const UserScreen = ({ navigation }) => {
   };
 
   if (isLoading) {
-    return <LoadingIndicator message="Please wait..." />;
+    return <LoadingIndicator message={t('loading')} />;
   }
+
+  console.log('User:', user);
 
   if (!user) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>User not found</Text>
+        <Text style={styles.errorText}>{t('userNotFound')}</Text>
         <Button 
           mode="contained" 
           onPress={handleLogout}
           style={styles.errorButton}
           buttonColor="#e74c3c"
         >
-          Go to Login
+          {t('goToLogin')}
         </Button>
       </View>
     );
@@ -159,7 +165,7 @@ const UserScreen = ({ navigation }) => {
             
             <View style={styles.profileInfo}>
               <Text style={styles.userName}>
-                {user.firstName} {user.lastName}
+                {user.full_name}
               </Text>
               <Text style={styles.userEmail}>{user.email}</Text>
               
@@ -169,7 +175,7 @@ const UserScreen = ({ navigation }) => {
                 style={styles.editButton}
                 icon="pencil"
               >
-                Edit Profile
+                {t('editProfile')}
               </Button>
             </View>
           </View>
@@ -178,7 +184,7 @@ const UserScreen = ({ navigation }) => {
       
       {recentDocuments.length > 0 && (
         <Card style={styles.sectionCard}>
-          <Card.Title title="Recent Documents" />
+          <Card.Title title={t('recentDocuments')} />
           <Card.Content>
             {recentDocuments.map((doc) => (
               <TouchableOpacity 
@@ -198,46 +204,51 @@ const UserScreen = ({ navigation }) => {
                 <Ionicons name="chevron-forward" size={20} color="#777" />
               </TouchableOpacity>
             ))}
-            
             <Button 
               mode="text" 
               onPress={() => navigation.navigate('DocumentsTab')}
               style={styles.viewAllButton}
             >
-              View All Documents
+              {t('viewAllDocuments')}
             </Button>
           </Card.Content>
         </Card>
       )}
       
       <Card style={styles.sectionCard}>
-        <Card.Title title="Settings" />
+        <Card.Title title={t('settings')} />
         <Card.Content>
           <List.Item
-            title="Notifications"
-            description="Receive alerts about document updates and calls"
-            left={props => <List.Icon {...props} icon="bell" />}
-            right={props => <Switch value={notificationsEnabled} onValueChange={toggleNotifications} />}
+            title={t('language')}
+            description={t('selectLanguageDescription')}
+            left={props => <List.Icon {...props} icon="translate" />}
+            right={props => <LanguageSelector compact={true} />}
           />
-        
           
           <Divider />
           
           <List.Item
-            title="Account Information"
-            description="View your account details"
+            title={t('notifications')}
+            description={t('notificationsDescription')}
+            left={props => <List.Icon {...props} icon="bell" />}
+            right={props => <Switch value={notificationsEnabled} onValueChange={toggleNotifications} />}
+          />
+        
+          <Divider />
+          
+          <List.Item
+            title={t('accountSettings')}
+            description={t('accountSettingsDescription')}
             left={props => <List.Icon {...props} icon="account" />}
             right={props => <List.Icon {...props} icon="chevron-right" />}
             onPress={() => {/* Navigate to account details */}}
           />
           
-
-          
           <Divider />
           
           <List.Item
-            title="Help & Support"
-            description="Contact our support team"
+            title={t('help')}
+            description={t('contactSupport')}
             left={props => <List.Icon {...props} icon="help-circle" />}
             right={props => <List.Icon {...props} icon="chevron-right" />}
             onPress={() => {/* Navigate to help & support */}}
@@ -247,8 +258,8 @@ const UserScreen = ({ navigation }) => {
           
           {/* Single Logout Button */}
           <List.Item
-            title="Logout"
-            description="Sign out of your account"
+            title={t('logout')}
+            description={t('signOutDescription')}
             left={props => <List.Icon {...props} icon="logout" color="#e74c3c" />}
             right={props => <List.Icon {...props} icon="chevron-right" color="#e74c3c" />}
             titleStyle={{ color: '#e74c3c' }}

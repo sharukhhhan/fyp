@@ -169,8 +169,8 @@ const DocumentDetailScreen = ({ route, navigation }) => {
 
   // Handle scheduling a video call
   const handleScheduleCall = () => {
-    // Navigate to video call scheduling screen with document ID
-    navigation.navigate('ScheduleCall', { documentId });
+    // Show alert since ScheduleCall screen doesn't exist yet
+    Alert.alert('Coming Soon', 'Schedule call feature will be available soon.');
   };
 
   // Handle editing document

@@ -15,9 +15,11 @@ import {
   useTheme 
 } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalization } from '../contexts/LocalizationContext';
 
 const NewDocumentOptionScreen = ({ navigation }) => {
   const theme = useTheme();
+  const { t } = useLocalization();
 
   // Handle option selection
   const handleOptionSelect = (option) => {
@@ -35,9 +37,9 @@ const NewDocumentOptionScreen = ({ navigation }) => {
 
   return (
     <ScrollView style={styles.container}>
-      <Title style={styles.title}>Create a New Document</Title>
+      <Title style={styles.title}>{t('createNewDocument')}</Title>
       <Paragraph style={styles.subtitle}>
-        Choose how you would like to create your document
+        {t('chooseCreationMethod')}
       </Paragraph>
 
       <Card 
@@ -53,10 +55,9 @@ const NewDocumentOptionScreen = ({ navigation }) => {
             />
           </View>
           <View style={styles.textContainer}>
-            <Title style={styles.optionTitle}>Chat with AI</Title>
+            <Title style={styles.optionTitle}>{t('chatWithAIOption')}</Title>
             <Paragraph style={styles.optionDescription}>
-              Create a document by chatting with our AI assistant. The AI will guide you through 
-              document drafting with personalized suggestions and templates.
+              {t('chatWithAIDesc')}
             </Paragraph>
           </View>
         </Card.Content>
@@ -66,7 +67,7 @@ const NewDocumentOptionScreen = ({ navigation }) => {
             onPress={() => handleOptionSelect('ai')}
             style={styles.actionButton}
           >
-            Start AI Chat
+            {t('startAIChat')}
           </Button>
         </Card.Actions>
       </Card>
@@ -84,10 +85,9 @@ const NewDocumentOptionScreen = ({ navigation }) => {
             />
           </View>
           <View style={styles.textContainer}>
-            <Title style={styles.optionTitle}>Upload & Manual Entry</Title>
+            <Title style={styles.optionTitle}>{t('uploadManual')}</Title>
             <Paragraph style={styles.optionDescription}>
-              Create a document by uploading a file and entering document details manually. 
-              Perfect for existing documents that need notarization.
+              {t('uploadManualDesc')}
             </Paragraph>
           </View>
         </Card.Content>
@@ -97,25 +97,25 @@ const NewDocumentOptionScreen = ({ navigation }) => {
             onPress={() => handleOptionSelect('manual')}
             style={styles.actionButton}
           >
-            Continue to Form
+            {t('continueToForm')}
           </Button>
         </Card.Actions>
       </Card>
 
       <View style={styles.infoSection}>
-        <Text style={styles.infoTitle}>Which option is right for me?</Text>
+        <Text style={styles.infoTitle}>{t('whichOption')}</Text>
         
         <View style={styles.infoItem}>
           <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
           <Text style={styles.infoText}>
-            <Text style={styles.bold}>Chat with AI</Text> is great for creating new legal documents from scratch.
+            <Text style={styles.bold}>{t('chatWithAIOption')}</Text> {t('aiGreat')}
           </Text>
         </View>
         
         <View style={styles.infoItem}>
           <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
           <Text style={styles.infoText}>
-            <Text style={styles.bold}>Upload & Manual Entry</Text> is ideal when you already have a document file.
+            <Text style={styles.bold}>{t('uploadManual')}</Text> {t('uploadIdeal')}
           </Text>
         </View>
       </View>

@@ -16,14 +16,24 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.onlinenotary"
+      "bundleIdentifier": "com.yourcompany.onlinenotary",
+      "jsEngine": "hermes",
+      "infoPlist": {
+        "LSSupportsOpeningDocumentsInPlace": true,
+        "UIFileSharingEnabled": true
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.yourcompany.onlinenotary"
+      "package": "com.yourcompany.onlinenotary",
+      "jsEngine": "hermes",
+      "permissions": [
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -40,7 +50,16 @@
         {
           "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to upload documents."
         }
-      ]
-    ]
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to save documents to your photo library.",
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save documents to your photo library."
+        }
+      ],
+      "expo-video"
+    ],
+    "jsEngine": "hermes"
   }
 }

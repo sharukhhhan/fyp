@@ -745,53 +745,54 @@ class AIChatView(APIView):
         cache.set(f"ai_chat_session_{session_id}", session_data, timeout=3600)
     
     def post(self, request, *args, **kwargs):
-        """Обработка сообщения пользователя и выполнение действий"""
-        prompt = request.data.get('prompt')
-        language = request.data.get('language', 'ru')
-        operation = request.data.get('operation', 'chat')  # chat, save, finalize, verify, translate, end
-        document_type = request.data.get('document_type')
-        
-        # Получаем или создаем сессию
+        operation = request.data.get('operation', 'chat')
         session_id = self.get_or_create_session(request)
         session_data = self.get_session_data(session_id)
-        
-        # Устанавливаем язык сессии, если он не установлен
-        if 'language' not in session_data or not session_data['language']:
-            session_data['language'] = language
-        
-        # Выполняем операцию в зависимости от запроса
-        if operation == 'chat' and prompt:
-            return self._handle_chat(request, session_id, session_data, prompt, document_type)
-        elif operation == 'save' and session_data.get('document_content'):
-            return self._handle_save_document(request, session_id, session_data)
-        elif operation == 'finalize' and session_data.get('document_id'):
+        language = request.data.get('language', session_data.get('language', 'ru'))
+        prompt = request.data.get('prompt')
+        corrections = request.data.get('corrections')
+        document_type = request.data.get('document_type')
+
+        # Обновляем язык, если нужно
+        session_data['language'] = language
+        self.update_session_data(session_id, session_data)
+
+        if operation == 'chat':
+            if prompt:
+                return self._handle_chat(request, session_id, session_data, prompt, document_type)
+            elif corrections:
+                return self._handle_chat(request, session_id, session_data, corrections, document_type)
+            else:
+                return Response(
+                    {'error': 'Необходимо указать prompt или corrections'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        elif operation == 'finalize':
             return self._handle_finalize_document(request, session_id, session_data)
-        elif operation == 'verify' and session_data.get('document_id'):
-            return self._handle_verify_document(request, session_id, session_data)
+
         elif operation == 'translate':
             return self._handle_translate_document(request, session_id, session_data)
+
         elif operation == 'end':
             return self._handle_end_session(request, session_id)
+
         else:
             return Response(
-                {'error': 'Некорректная операция или недостаточно данных'},
+                {'error': 'Неверная операция'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
     
     def _handle_chat(self, request, session_id, session_data, prompt, document_type=None):
-        """Обработка обычного сообщения в чате"""
-        # Получаем данные из верифицированных документов пользователя
-        identity_document = IdentityDocument.objects.filter(
-            user=request.user,
-            is_verified=True
-        ).first()
-        
+        """Обработка сообщения пользователя с упрощенной логикой"""
+        identity_document = IdentityDocument.objects.filter(user=request.user, is_verified=True).first()
         if not identity_document:
             return Response(
                 {'error': 'У вас должен быть верифицированный идентификационный документ'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         user_data = {
             'full_name': identity_document.full_name,
             'document_type': identity_document.get_type_display(),
@@ -800,97 +801,74 @@ class AIChatView(APIView):
             'issue_date': identity_document.issue_date.isoformat(),
             'expiry_date': identity_document.expiry_date.isoformat() if identity_document.expiry_date else None
         }
-        
-        # Инициализируем сервис AI
+
         ai_service = OpenAIDocumentService()
-        
-        # Получаем историю диалога
         conversation_history = session_data.get('history', [])
-        
-        # Если у нас уже есть документ, используем его содержимое
-        current_document = None
         document_id = session_data.get('document_id')
-        
+        current_document = None
+        previous_content = None
+
         if document_id:
             try:
-                current_document = Document.objects.get(
-                    id=document_id,
-                    user=request.user
-                )
+                current_document = Document.objects.get(id=document_id, user=request.user)
+                if current_document.generation_history:
+                    previous_content = current_document.generation_history[-1]['content']
             except Document.DoesNotExist:
                 session_data['document_id'] = None
-        
-        # Генерируем ответ
+
+        # Основной вызов GPT
         result = ai_service.generate_document(
             user_data=user_data,
             prompt=prompt,
             document_type=document_type,
             language=session_data.get('language', 'ru'),
-            previous_content=current_document.generation_history[-1]['content'] if current_document and current_document.generation_history else None,
+            previous_content=previous_content,
             conversation_history=conversation_history
         )
-        
+
         if not result['success']:
-            return Response(
-                {'error': result['error']},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        
-        # Обновляем историю диалога
+            return Response({'error': result['error']}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Обновляем историю (храним именно user+AI json, не просто текст)
         conversation_history.append({'role': 'user', 'content': prompt})
-        conversation_history.append({'role': 'assistant', 'content': result['content']})
+        conversation_history.append({'role': 'assistant', 'content': result['raw_response']})
         session_data['history'] = conversation_history
-        
-        # Если это документ, сохраняем его в сессии
-        if result.get('is_document', False):
-            session_data['document_content'] = result['content']
-        
-        # Обновляем сессию
+
+        # Обновляем текущий черновик
+        session_data['document_content'] = result['content']
         self.update_session_data(session_id, session_data)
-        
-        # Если у нас уже есть документ, обновляем его
-        if current_document and result.get('is_document', False):
-            # Обновляем документ
-            if not current_document.generation_history:
-                current_document.generation_history = []
-            
-            current_document.generation_history.append({
-                'timestamp': result['timestamp'],
-                'prompt': prompt,
-                'content': result['content'],
-                'action': 'edit',
-                'model_used': result.get('model_used'),
-                'language': session_data.get('language', 'ru')
-            })
-            
-            current_document.revision_count += 1
-            current_document.save()
-            
-            # Обновляем PDF
-            self._generate_pdf(current_document, result['content'])
-            
-            return Response({
-                'message': result['content'],
-                'session_id': session_id,
-                'document_id': str(current_document.id),
-                'is_document': True,
-                'file_url': request.build_absolute_uri(current_document.file.url) if current_document.file else None,
-                'operation': 'chat'
-            })
-        
-        # Возвращаем результат
-        response_data = {
+
+        # Обновляем документ в БД (если он есть)
+        if result['is_ready']:
+            if current_document:
+                current_document.generation_history.append({
+                    'timestamp': result['timestamp'],
+                    'prompt': prompt,
+                    'content': result['content'],
+                    'action': 'final',
+                    'model_used': result['model_used'],
+                    'language': session_data['language']
+                })
+                current_document.revision_count += 1
+                current_document.save()
+                self._generate_pdf(current_document, result['content'])
+            else:
+                doc = self._create_document(request, session_data, result['content'])
+                session_data['document_id'] = str(doc.id)
+                self.update_session_data(session_id, session_data)
+                self._generate_pdf(doc, result['content'])
+
+        return Response({
             'message': result['content'],
             'session_id': session_id,
-            'is_document': result.get('is_document', False),
+            'document_id': session_data.get('document_id'),
+            'is_ready': result['is_ready'],
+            'missing_info': result['missing_info'],
+            'remarks': result['remarks'],
+            'warnings': result['warnings'],
             'operation': 'chat'
-        }
-        
-        # Добавляем document_id если есть
-        if document_id:
-            response_data['document_id'] = document_id
-        
-        return Response(response_data)
+        })
+
     
     def _handle_save_document(self, request, session_id, session_data):
         """Сохранение документа"""
@@ -1077,41 +1055,43 @@ class AIChatView(APIView):
             return False
     
     def _handle_finalize_document(self, request, session_id, session_data):
-        """Финализация документа"""
+        """Финализация документа: пометить как готовый и завершить сессию"""
         document_id = session_data.get('document_id')
         if not document_id:
             return Response(
                 {'error': 'Нет документа для финализации'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
-            document = Document.objects.get(
-                id=document_id,
-                user=request.user
-            )
+            document = Document.objects.get(id=document_id, user=request.user)
         except Document.DoesNotExist:
             return Response(
                 {'error': 'Документ не найден'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
-        # Помечаем документ как финализированный
+
+        # Проверка, действительно ли документ готов
+        if not session_data.get('document_content'):
+            return Response(
+                {'error': 'Документ не готов для финализации'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         document.is_finalized = True
         document.finalized_at = timezone.now()
         document.save()
-        
-        # Обновляем информацию в сессии
-        session_data['document_finalized'] = True
-        self.update_session_data(session_id, session_data)
-        
+
+        # Завершаем сессию
+        cache.delete(f"ai_chat_session_{session_id}")
+
         return Response({
             'message': 'Документ успешно финализирован',
-            'session_id': session_id,
             'document_id': str(document.id),
             'file_url': request.build_absolute_uri(document.file.url) if document.file else None,
             'operation': 'finalize'
         })
+
     
     def _handle_verify_document(self, request, session_id, session_data):
         """Отправка документа на верификацию"""

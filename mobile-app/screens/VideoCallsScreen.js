@@ -8,7 +8,6 @@ import {
   Alert
 } from 'react-native';
 import { 
-  FAB, 
   Divider,
   Text, 
   Searchbar,
@@ -19,6 +18,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import VideoCallItem from '../components/VideoCallItem';
 import LoadingIndicator from '../components/LoadingIndicator';
+import { useLocalization } from '../contexts/LocalizationContext';
 
 // Mock video call data
 const MOCK_VIDEO_CALLS = [
@@ -59,6 +59,7 @@ const MOCK_VIDEO_CALLS = [
 
 const VideoCallsScreen = ({ navigation }) => {
   const theme = useTheme();
+  const { t } = useLocalization();
   const [videoCalls, setVideoCalls] = useState([]);
   const [filteredCalls, setFilteredCalls] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -140,25 +141,25 @@ const VideoCallsScreen = ({ navigation }) => {
   const handleRescheduleCall = (callId) => {
     // In a real app, would show a date/time picker
     Alert.alert(
-      'Reschedule Call',
-      'This feature would allow you to select a new date and time for your call.',
-      [{ text: 'OK' }]
+      t('reschedule'),
+      t('rescheduleDescription'),
+      [{ text: t('ok') }]
     );
   };
 
   // Handle canceling a call
   const handleCancelCall = (callId) => {
     Alert.alert(
-      'Cancel Call',
-      'Are you sure you want to cancel this video call?',
+      t('cancelCall'),
+      t('cancelConfirmation'),
       [
-        { text: 'No', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         { 
-          text: 'Yes', 
+          text: t('yes'), 
           onPress: () => {
             // Remove the call from the list
             setVideoCalls(prevCalls => prevCalls.filter(call => call.id !== callId));
-            Alert.alert('Success', 'Call canceled successfully');
+            Alert.alert(t('success'), t('callCanceled'));
           }
         }
       ]
@@ -178,7 +179,7 @@ const VideoCallsScreen = ({ navigation }) => {
           ]}
           textStyle={activeFilter === 'upcoming' ? { color: theme.colors.primary } : null}
         >
-          Upcoming
+          {t('upcoming')}
         </Chip>
         
         <Chip
@@ -190,7 +191,7 @@ const VideoCallsScreen = ({ navigation }) => {
           ]}
           textStyle={activeFilter === 'past' ? { color: theme.colors.primary } : null}
         >
-          Past
+          {t('past')}
         </Chip>
         
         <Chip
@@ -202,7 +203,7 @@ const VideoCallsScreen = ({ navigation }) => {
           ]}
           textStyle={activeFilter === 'all' ? { color: theme.colors.primary } : null}
         >
-          All
+          {t('all')}
         </Chip>
       </View>
     );
@@ -214,8 +215,8 @@ const VideoCallsScreen = ({ navigation }) => {
       return (
         <View style={styles.emptyContainer}>
           <Ionicons name="videocam-off-outline" size={60} color="#bbb" />
-          <Text style={styles.emptyText}>No video calls match your filters</Text>
-          <Text style={styles.emptySubtext}>Try changing your search or filter</Text>
+          <Text style={styles.emptyText}>{t('noCallsMatch')}</Text>
+          <Text style={styles.emptySubtext}>{t('tryChangingCallFilter')}</Text>
         </View>
       );
     }
@@ -223,28 +224,28 @@ const VideoCallsScreen = ({ navigation }) => {
     return (
       <View style={styles.emptyContainer}>
         <Ionicons name="videocam-outline" size={60} color="#bbb" />
-        <Text style={styles.emptyText}>No video calls scheduled</Text>
-        <Text style={styles.emptySubtext}>Tap the + button to schedule your first call</Text>
-        <Button 
+        <Text style={styles.emptyText}>{t('noCallsScheduled')}</Text>
+        <Text style={styles.emptySubtext}>{t('tapToSchedule')}</Text>
+        {/* <Button 
           mode="contained" 
-          onPress={() => navigation.navigate('ScheduleCall')}
+          onPress={() => Alert.alert('Coming Soon', 'Schedule call feature will be available soon.')}
           style={styles.scheduleButton}
         >
-          Schedule Call
-        </Button>
+          {t('scheduleCall')}
+        </Button> */}
       </View>
     );
   };
 
   // If still loading initially
   if (isLoading && !refreshing) {
-    return <LoadingIndicator message="Loading video calls..." />;
+    return <LoadingIndicator message={t('loadingVideoCalls')} />;
   }
 
   return (
     <SafeAreaView style={styles.container}>
       <Searchbar
-        placeholder="Search video calls"
+        placeholder={t('searchVideoCalls')}
         onChangeText={setSearchQuery}
         value={searchQuery}
         style={styles.searchBar}
@@ -276,12 +277,6 @@ const VideoCallsScreen = ({ navigation }) => {
         }
       />
       
-      <FAB
-        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-        icon="plus"
-        onPress={() => navigation.navigate('ScheduleCall')}
-        color="#fff"
-      />
     </SafeAreaView>
   );
 };
@@ -331,15 +326,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
-  scheduleButton: {
-    marginTop: 16,
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-  },
+  // scheduleButton: {
+  //   marginTop: 16,
+  // },
 });
 
 export default VideoCallsScreen;
