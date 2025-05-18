@@ -31,11 +31,18 @@ export const DocumentProvider = ({ children }) => {
       setIsLoading(true);
       setError(null);
       
-      const data = await fetchDocuments();
-      setDocuments(data);
+      const response = await fetchDocuments();
+      console.log("Documents response:", response);
+      
+      // Ensure we have a valid array of documents
+      const documents = Array.isArray(response) ? response : 
+                       (response && response.data) ? response.data : [];
+                       
+      setDocuments(documents);
     } catch (error) {
       setError(error.message || 'Failed to load documents');
       console.error('Error loading documents: ', error);
+      setDocuments([]); // Set empty array on error
     } finally {
       setIsLoading(false);
     }

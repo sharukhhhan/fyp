@@ -21,7 +21,7 @@ export const login = async (email, password) => {
       return { error: 'Invalid email or password' };
     }
     
-    const { access, refresh, user } = response;
+    const { access, refresh, user } = response.data;
     
     if (!access || !refresh) {
       console.log('Missing tokens in response');
@@ -88,12 +88,12 @@ export const register = async (userData) => {
     const response = await api.post('/api/register/', formattedData);
     
     // Если регистрация возвращает токены напрямую
-    if (response.access && response.refresh) {
-      await AsyncStorage.setItem('token', response.access);
-      await AsyncStorage.setItem('refreshToken', response.refresh);
+    if (response.data.access && response.data.refresh) {
+      await AsyncStorage.setItem('token', response.data.access);
+      await AsyncStorage.setItem('refreshToken', response.data.refresh);
       
       // Получаем профиль пользователя, если он не включен в ответ при регистрации
-      let user = response.user;
+      let user = response.data.user;
       if (!user) {
         user = await api.get('/api/profile/');
       }
@@ -106,7 +106,7 @@ export const register = async (userData) => {
         refreshToken: response.refresh
       };
     }
-    
+    console.log('Registration response:', response);
     // Если регистрация не возвращает токены, возможно, нужен отдельный логин
     return await login(userData.email, userData.password);
   } catch (error) {

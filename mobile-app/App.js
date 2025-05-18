@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -8,9 +8,20 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
 
+// SSL certificate handling for development only
+if (__DEV__) {
+  if (Platform.OS === 'ios') {
+    console.warn(
+      'Running in development mode with SSL certificate validation disabled.\n' +
+      'Do not use this configuration in production!'
+    );
+  }
+}
+
 // Import screens
 import DocumentsScreen from './screens/DocumentsScreen';
 import DocumentDetailScreen from './screens/DocumentDetailScreen';
+import DocumentFilesScreen from './screens/DocumentFilesScreen';
 import NewDocumentScreen from './screens/NewDocumentScreen';
 import NewDocumentOptionScreen from './screens/NewDocumentOptionScreen';
 import ChatWithAIScreen from './screens/ChatWithAIScreen';
@@ -27,6 +38,7 @@ import LoadingIndicator from './components/LoadingIndicator';
 // Import contexts
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DocumentProvider } from './contexts/DocumentContext';
+import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -55,23 +67,26 @@ const theme = {
 
 // Document stack navigator
 function DocumentsStack() {
+  const { t } = useLocalization();
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Documents" component={DocumentsScreen} options={{ headerShown: true }} />
-      <Stack.Screen name="DocumentDetail" component={DocumentDetailScreen} options={{ title: 'Document Details' }} />
-      <Stack.Screen name="NewDocumentOption" component={NewDocumentOptionScreen} options={{ title: 'Create Document' }} />
-      <Stack.Screen name="NewDocument" component={NewDocumentScreen} options={{ title: 'New Document' }} />
-      <Stack.Screen name="ChatWithAI" component={ChatWithAIScreen} options={{ title: 'Chat with AI' }} />
+      <Stack.Screen name="Documents" component={DocumentsScreen} options={{ headerShown: true, title: t('documents') }} />
+      <Stack.Screen name="DocumentDetail" component={DocumentDetailScreen} options={{ title: t('documentDetails') }} />
+      <Stack.Screen name="DocumentFiles" component={DocumentFilesScreen} options={{ title: t('downloadedDocuments') }} />
+      <Stack.Screen name="NewDocumentOption" component={NewDocumentOptionScreen} options={{ title: t('createNewDocument') }} />
+      <Stack.Screen name="NewDocument" component={NewDocumentScreen} options={{ title: t('newDocument') }} />
+      <Stack.Screen name="ChatWithAI" component={ChatWithAIScreen} options={{ title: t('chatWithAI') }} />
     </Stack.Navigator>
   );
 }
 
 // Video calls stack navigator
 function VideoCallsStack() {
+  const { t } = useLocalization();
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Calls" component={VideoCallsScreen} options={{ headerShown: true }} />
-      <Stack.Screen name="JoinCall" component={JoinCallScreen} options={{ title: 'Join Call' }} />
+      <Stack.Screen name="Calls" component={VideoCallsScreen} options={{ headerShown: true, title: t('videoCalls') }} />
+      <Stack.Screen name="JoinCall" component={JoinCallScreen} options={{ title: t('joinCall') }} />
     </Stack.Navigator>
   );
 }
@@ -79,6 +94,7 @@ function VideoCallsStack() {
 // User stack navigator
 function UserStack() {
   const { logout } = useAuth();
+  const { t } = useLocalization();
   
   // Handle logout with confirmation
   const handleLogout = () => {
@@ -91,17 +107,18 @@ function UserStack() {
         name="UserProfile" 
         component={UserScreen} 
         options={{ 
-          title: 'Profile',
+          title: t('profile'),
           // Simple, clean header without logout button
         }} 
       />
-      <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Edit Profile' }} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: t('editProfile') }} />
     </Stack.Navigator>
   );
 }
 
 // Main tab navigator
 function MainTabs() {
+  const { t } = useLocalization();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -126,17 +143,17 @@ function MainTabs() {
       <Tab.Screen 
         name="DocumentsTab" 
         component={DocumentsStack} 
-        options={{ title: 'Documents' }} 
+        options={{ title: t('documents') }} 
       />
       <Tab.Screen 
         name="VideoCallsTab" 
         component={VideoCallsStack} 
-        options={{ title: 'Video Calls' }} 
+        options={{ title: t('videoCalls') }} 
       />
       <Tab.Screen 
         name="UserTab" 
         component={UserStack} 
-        options={{ title: 'Profile' }} 
+        options={{ title: t('profile') }} 
       />
     </Tab.Navigator>
   );
@@ -144,10 +161,11 @@ function MainTabs() {
 
 // Authentication stack
 function AuthStack() {
+  const { t } = useLocalization();
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} options={{ title: t('login') }} />
+      <Stack.Screen name="Register" component={RegisterScreen} options={{ title: t('register') }} />
     </Stack.Navigator>
   );
 }
@@ -155,9 +173,10 @@ function AuthStack() {
 // Root navigation container
 function RootNavigator() {
   const { user, isLoading } = useAuth();
+  const { t } = useLocalization();
   
   if (isLoading) {
-    return <LoadingIndicator message="Loading..." />;
+    return <LoadingIndicator message={t('loading')} />;
   }
 
   return (
@@ -171,12 +190,14 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
-        <AuthProvider>
-          <DocumentProvider>
-            <RootNavigator />
-            <StatusBar style="auto" />
-          </DocumentProvider>
-        </AuthProvider>
+        <LocalizationProvider>
+          <AuthProvider>
+            <DocumentProvider>
+              <RootNavigator />
+              <StatusBar style="auto" />
+            </DocumentProvider>
+          </AuthProvider>
+        </LocalizationProvider>
       </PaperProvider>
     </SafeAreaProvider>
   );

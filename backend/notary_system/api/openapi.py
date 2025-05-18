@@ -111,54 +111,79 @@ class OpenAIDocumentService:
     """
         
     def generate_document(self, user_data, prompt, document_type=None, language='ru', previous_content=None, conversation_history=None):
-        """Генерация документа через OpenAI API с поддержкой истории"""
+        """Генерация документа через OpenAI API с возвратом JSON"""
         try:
             system_prompt = self.create_system_prompt(user_data, document_type, language)
             
-            # Формируем историю сообщений
-            messages = [{"role": "system", "content": system_prompt}]
+            # Новый JSON-инструктаж
+            instruction = """
+    Всегда отвечай в формате JSON со следующей структурой:
+    {
+    "is_ready": bool,             # true если документ можно финализировать
+    "document": "текст документа", # сам документ
+    "missing_info": [строки],     # список недостающих деталей
+    "remarks": "замечания",       # что нужно уточнить/улучшить
+    "warnings": "предупреждения"  # например: если есть ошибки
+    }
+    НЕ добавляй никаких пояснений до или после JSON. Только чистый JSON-объект.
+    """
+
+            messages = [{"role": "system", "content": system_prompt + "\n\n" + instruction}]
             
-            # Добавляем предыдущие сообщения из истории, если они есть
+            # История
             if conversation_history:
                 for msg in conversation_history:
                     messages.append({
-                        "role": "user" if msg.get('role') == 'user' else "assistant",
-                        "content": msg.get('content')
+                        "role": msg.get('role', 'user'),
+                        "content": msg.get('content', '')
                     })
-            
-            # Добавляем текущий запрос
-            if previous_content:
-                user_prompt = f"""Текущий документ:
-{previous_content}
 
-Запрос пользователя: {prompt}"""
-            else:
-                user_prompt = prompt
-            
+            # Текущий запрос
+            user_prompt = prompt if not previous_content else f"Текущий документ:\n{previous_content}\n\nПравки/уточнение: {prompt}"
             messages.append({"role": "user", "content": user_prompt})
             
-            # Вызов API OpenAI
+            # GPT API вызов
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 temperature=0.3,
                 max_tokens=2000
             )
-            
-            generated_content = response.choices[0].message.content
-            
-            # Определяем, является ли ответ документом
-            is_document = self.is_document_content(generated_content)
-            
+
+            raw_reply = response.choices[0].message.content.strip()
+
+            # Пробуем распарсить JSON
+            try:
+                parsed = json.loads(raw_reply)
+            except json.JSONDecodeError:
+                logger.warning(f"GPT вернул невалидный JSON: {raw_reply}")
+                return {
+                    'success': False,
+                    'error': 'AI вернул некорректный формат',
+                    'raw_response': raw_reply
+                }
+
+            # Минимальная валидация
+            parsed.setdefault('is_ready', False)
+            parsed.setdefault('document', '')
+            parsed.setdefault('missing_info', [])
+            parsed.setdefault('remarks', '')
+            parsed.setdefault('warnings', '')
+
             return {
                 'success': True,
-                'content': generated_content,
-                'is_document': is_document,
+                'content': parsed['document'],
+                'is_document': parsed['is_ready'],
+                'is_ready': parsed['is_ready'],
+                'missing_info': parsed['missing_info'],
+                'remarks': parsed['remarks'],
+                'warnings': parsed['warnings'],
+                'raw_response': raw_reply,
                 'model_used': self.model,
                 'language': language,
                 'timestamp': datetime.now().isoformat()
             }
-            
+
         except Exception as e:
             logger.exception(f"Error generating document: {str(e)}")
             return {
@@ -166,6 +191,7 @@ class OpenAIDocumentService:
                 'error': 'Произошла ошибка при обращении к AI сервису',
                 'details': str(e)
             }
+
     
     def translate_document(self, document_content, from_language, to_language):
         """Перевод документа с одного языка на другой"""

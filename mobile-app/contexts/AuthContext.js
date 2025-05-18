@@ -95,15 +95,17 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       setIsLoading(true);
+
+      // First register the user
+      await register(userData);
       
-      const response = await register(userData);
-      const { user, token } = response;
-      
-      // Store user and token
-      await AsyncStorage.setItem('user', JSON.stringify(user));
-      await AsyncStorage.setItem('token', token);
-      
-      setUser(user);
+      // After registration, perform login to get tokens
+      const loginResult = await handleLogin(userData.email, userData.password);
+
+      if (loginResult.error) {
+        throw new Error(loginResult.error);
+      }
+
       return true;
     } catch (error) {
       setError(error.message || 'Registration failed');

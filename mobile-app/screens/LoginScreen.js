@@ -19,6 +19,8 @@ import {
   HelperText 
 } from 'react-native-paper';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocalization } from '../contexts/LocalizationContext';
+import LanguageSelector from '../components/LanguageSelector';
 
 // Создаем отдельный компонент для отображения ошибки
 const ErrorMessage = ({ errorText }) => {
@@ -36,6 +38,7 @@ const ErrorMessage = ({ errorText }) => {
 };
 
 const LoginScreen = ({ navigation }) => {
+  const { t } = useLocalization();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [secureTextEntry, setSecureTextEntry] = useState(true);
@@ -128,7 +131,7 @@ const LoginScreen = ({ navigation }) => {
       }, 300);
     } else {
       // On mobile we can also show an alert for better visibility
-      Alert.alert('Login Error', message);
+      Alert.alert(t('error'), message);
     }
   };
 
@@ -140,17 +143,17 @@ const LoginScreen = ({ navigation }) => {
     
     // Validate inputs
     if (!email.trim()) {
-      showError('Email is required');
+      showError(t('fieldRequired'));
       return;
     }
     
     if (!isEmailValid()) {
-      showError('Please enter a valid email address');
+      showError(t('invalidEmail'));
       return;
     }
     
     if (!password) {
-      showError('Password is required');
+      showError(t('fieldRequired'));
       return;
     }
     
@@ -165,14 +168,13 @@ const LoginScreen = ({ navigation }) => {
       // Сбрасываем пароль
       setPassword('');
       
-      // ВАЖНО: Сначала обрабатываем ошибки, затем завершаем загрузку
       if (result === true) {
         // Вход успешен, навигация произойдет автоматически
         console.log('Login successful');
         setIsLoading(false);
       } else {
         // Определяем сообщение об ошибке
-        let errorMessage = 'Invalid email or password';
+        let errorMessage = t('loginFailed');
         
         if (result && result.error) {
           errorMessage = result.error;
@@ -196,7 +198,7 @@ const LoginScreen = ({ navigation }) => {
       
       // Показываем ошибку в отдельном вызове
       setTimeout(() => {
-        showError('Login failed. Please try again.');
+        showError(t('networkError'));
       }, 0);
     }
   };
@@ -210,6 +212,10 @@ const LoginScreen = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        <View style={styles.languageSelectorContainer}>
+          <LanguageSelector compact={true} />
+        </View>
+        
         <View style={styles.logoContainer}>
           <Image 
             source={require('../assets/icon.png')} 
@@ -218,13 +224,13 @@ const LoginScreen = ({ navigation }) => {
           />
           <Headline style={styles.title}>Online Notary</Headline>
           <Subheading style={styles.subtitle}>
-            Secure document notarization from anywhere
+            {t('secureNotarization')}
           </Subheading>
         </View>
         
         <View style={styles.formContainer}>
           <TextInput
-            label="Email"
+            label={t('email')}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -236,7 +242,7 @@ const LoginScreen = ({ navigation }) => {
           />
           
           <TextInput
-            label="Password"
+            label={t('password')}
             value={password}
             onChangeText={setPassword}
             secureTextEntry={secureTextEntry}
@@ -261,26 +267,26 @@ const LoginScreen = ({ navigation }) => {
             loading={isLoading}
             disabled={isLoading}
           >
-            Log In
+            {t('login')}
           </Button>
           
           <TouchableOpacity>
             <Text style={styles.forgotPassword}>
-              Forgot password?
+              {t('forgotPassword')}
             </Text>
           </TouchableOpacity>
         </View>
         
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Don't have an account?
+            {t('noAccount')}
           </Text>
           <TouchableOpacity 
             onPress={() => navigation.navigate('Register')}
             disabled={isLoading}
           >
             <Text style={styles.registerLink}>
-              Register Now
+              {t('signUpNow')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -297,9 +303,15 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 24,
-    justifyContent: 'center',
+  },
+  languageSelectorContainer: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 1,
   },
   logoContainer: {
+    marginTop: 60,
     alignItems: 'center',
     marginBottom: 40,
   },

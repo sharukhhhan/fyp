@@ -20,6 +20,7 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useDocuments } from '../contexts/DocumentContext';
+import { useLocalization } from '../contexts/LocalizationContext';
 
 // Mock chat with AI service
 const simulateAIResponse = async (message, documentTitle) => {
@@ -74,6 +75,7 @@ const ChatWithAIScreen = ({ route, navigation }) => {
   const flatListRef = useRef(null);
   const inputRef = useRef(null);
   const { addDocument } = useDocuments();
+  const { t } = useLocalization();
   
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -90,14 +92,14 @@ const ChatWithAIScreen = ({ route, navigation }) => {
     if (fromNewDocument) {
       initialMessage = {
         id: '1',
-        text: `Hello! I'm here to help you create a new document. What type of document would you like to draft today?`,
+        text: t(`Hello! I'm here to help you create a new document. What type of document would you like to draft today?`),
         sender: 'ai',
         timestamp: new Date(),
       };
     } else {
       initialMessage = {
         id: '1',
-        text: `Hello! I'm here to help you with your document "${documentName}". How can I assist you today?`,
+        text: t(`Hello! I'm here to help you with your document "${documentName}". How can I assist you today?`),
         sender: 'ai',
         timestamp: new Date(),
       };
@@ -167,9 +169,9 @@ const ChatWithAIScreen = ({ route, navigation }) => {
   const handleCreateDocument = async () => {
     if (!documentReady) {
       Alert.alert(
-        'Document Not Ready',
-        'Please complete your conversation with the AI to generate document content first.',
-        [{ text: 'OK' }]
+        t('documentNotReady'),
+        t('pleaseComplete'),
+        [{ text: t('ok') }]
       );
       return;
     }
@@ -195,8 +197,8 @@ const ChatWithAIScreen = ({ route, navigation }) => {
       
       // Show success message
       Alert.alert(
-        'Document Created',
-        'Your document has been successfully created and saved.',
+        t('documentCreated'),
+        t('documentSaved'),
         [
           {
             text: 'View Documents',
@@ -359,7 +361,7 @@ const ChatWithAIScreen = ({ route, navigation }) => {
             disabled={isSaving || !documentReady}
             labelStyle={{ color: theme.colors.primary }}
           >
-            Create Document
+            {t('createDocument')}
           </Button>
         ),
       });
@@ -376,7 +378,7 @@ const ChatWithAIScreen = ({ route, navigation }) => {
         <View style={styles.documentReadyBanner}>
           <Ionicons name="checkmark-circle" size={20} color="white" />
           <Text style={styles.documentReadyText}>
-            Document is ready! Tap "Create Document" to save.
+            {t('documentReadyTap')}
           </Text>
         </View>
       )}
@@ -392,7 +394,7 @@ const ChatWithAIScreen = ({ route, navigation }) => {
       {isLoading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator color={theme.colors.primary} size="small" />
-          <Text style={styles.loadingText}>AI is thinking...</Text>
+          <Text style={styles.loadingText}>{t('aiThinking')}</Text>
         </View>
       )}
       
@@ -406,7 +408,7 @@ const ChatWithAIScreen = ({ route, navigation }) => {
         <RNTextInput
           ref={inputRef}
           style={styles.input}
-          placeholder="Type a message..."
+          placeholder={t('typeMessage')}
           value={inputMessage}
           onChangeText={setInputMessage}
           multiline
