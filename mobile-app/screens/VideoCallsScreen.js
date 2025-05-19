@@ -5,7 +5,8 @@ import {
   FlatList, 
   SafeAreaView,
   RefreshControl,
-  Alert
+  Alert,
+  Linking
 } from 'react-native';
 import { 
   Divider,
@@ -13,75 +14,46 @@ import {
   Searchbar,
   Chip,
   Button,
-  useTheme 
+  useTheme,
+  Card
 } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import VideoCallItem from '../components/VideoCallItem';
 import LoadingIndicator from '../components/LoadingIndicator';
 import { useLocalization } from '../contexts/LocalizationContext';
-
-// Mock video call data
-const MOCK_VIDEO_CALLS = [
-  {
-    id: '1',
-    title: 'Document Notarization - Lease Agreement',
-    scheduledTime: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
-    participants: [
-      { id: '1', name: 'John Doe', role: 'client' },
-      { id: '2', name: 'Jane Smith', role: 'notary' }
-    ],
-    documentTitle: 'Residential Lease Agreement',
-    status: 'confirmed'
-  },
-  {
-    id: '2',
-    title: 'Document Review - Power of Attorney',
-    scheduledTime: new Date(Date.now() + 86400000).toISOString(), // 1 day from now
-    participants: [
-      { id: '1', name: 'John Doe', role: 'client' },
-      { id: '3', name: 'Robert Johnson', role: 'notary' }
-    ],
-    documentTitle: 'General Power of Attorney',
-    status: 'confirmed'
-  },
-  {
-    id: '3',
-    title: 'Document Signing - Will',
-    scheduledTime: new Date(Date.now() + 172800000).toISOString(), // 2 days from now
-    participants: [
-      { id: '1', name: 'John Doe', role: 'client' },
-      { id: '4', name: 'Emily Brown', role: 'notary' }
-    ],
-    documentTitle: 'Last Will and Testament',
-    status: 'confirmed'
-  }
-];
+import { format } from 'date-fns';
+import { fetchVideoSessions } from '../services/videoService';
+import { useAuth } from '../contexts/AuthContext';
 
 const VideoCallsScreen = ({ navigation }) => {
   const theme = useTheme();
   const { t } = useLocalization();
+  const { user } = useAuth(); // Using the correct user object from auth context
   const [videoCalls, setVideoCalls] = useState([]);
   const [filteredCalls, setFilteredCalls] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('upcoming');
+  const [error, setError] = useState(null);
 
-  // Load video calls
+  // Load video calls from API using videoService
+  const loadVideoCalls = async () => {
+    try {
+      setError(null);
+      const response = await fetchVideoSessions();
+      console.log('Video calls response:', response.data);
+      setVideoCalls(response.data);
+    } catch (error) {
+      console.error('Error loading video sessions:', error);
+      setError('Failed to load video sessions');
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Load video calls on component mount
   useEffect(() => {
-    const loadVideoCalls = async () => {
-      // In a real app, you would fetch this from your API
-      try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setVideoCalls(MOCK_VIDEO_CALLS);
-      } catch (error) {
-        console.error('Error loading video calls:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     loadVideoCalls();
   }, []);
 
@@ -90,28 +62,28 @@ const VideoCallsScreen = ({ navigation }) => {
     let filtered = [...videoCalls];
     
     // Apply status filter
+    const now = new Date();
     if (activeFilter === 'upcoming') {
       filtered = filtered.filter(call => {
-        const callTime = new Date(call.scheduledTime);
-        return callTime > new Date();
+        const callTime = new Date(call.scheduled_time);
+        return callTime > now;
       });
     } else if (activeFilter === 'past') {
       filtered = filtered.filter(call => {
-        const callTime = new Date(call.scheduledTime);
-        return callTime < new Date();
+        const callTime = new Date(call.scheduled_time);
+        return callTime <= now;
       });
     }
     
     // Apply search
     if (searchQuery) {
       filtered = filtered.filter(call => 
-        call.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        call.documentTitle?.toLowerCase().includes(searchQuery.toLowerCase())
+        call.request_details?.document_details?.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
     
     // Sort by scheduled time
-    filtered.sort((a, b) => new Date(a.scheduledTime) - new Date(b.scheduledTime));
+    filtered.sort((a, b) => new Date(a.scheduled_time) - new Date(b.scheduled_time));
     
     setFilteredCalls(filtered);
   }, [videoCalls, searchQuery, activeFilter]);
@@ -119,51 +91,15 @@ const VideoCallsScreen = ({ navigation }) => {
   // Handle refresh
   const handleRefresh = async () => {
     setRefreshing(true);
-    
-    try {
-      // In a real app, you would refresh from your API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // Could update the video calls data here if needed
-    } catch (error) {
-      console.error('Error refreshing video calls:', error);
-    } finally {
-      setRefreshing(false);
-    }
+    await loadVideoCalls();
   };
 
   // Handle joining a call
-  const handleJoinCall = (callId) => {
-    // Navigate to call screen
-    navigation.navigate('JoinCall', { callId });
-  };
-
-  // Handle rescheduling a call
-  const handleRescheduleCall = (callId) => {
-    // In a real app, would show a date/time picker
-    Alert.alert(
-      t('reschedule'),
-      t('rescheduleDescription'),
-      [{ text: t('ok') }]
-    );
-  };
-
-  // Handle canceling a call
-  const handleCancelCall = (callId) => {
-    Alert.alert(
-      t('cancelCall'),
-      t('cancelConfirmation'),
-      [
-        { text: t('cancel'), style: 'cancel' },
-        { 
-          text: t('yes'), 
-          onPress: () => {
-            // Remove the call from the list
-            setVideoCalls(prevCalls => prevCalls.filter(call => call.id !== callId));
-            Alert.alert(t('success'), t('callCanceled'));
-          }
-        }
-      ]
-    );
+  const handleJoinCall = (roomUrl) => {
+    Linking.openURL(roomUrl).catch(err => {
+      console.error('Error opening room URL:', err);
+      Alert.alert(t('error'), t('cannotOpenUrl'));
+    });
   };
 
   // Render filter chips
@@ -209,8 +145,80 @@ const VideoCallsScreen = ({ navigation }) => {
     );
   };
 
+  // Format date and time
+  const formatDateTime = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      // Format: DD.MM.YYYY | HH:MM
+      return format(date, 'dd.MM.yyyy | HH:mm');
+    } catch (e) {
+      return 'Invalid date';
+    }
+  };
+
+  // Render a single video call/meeting
+  const renderVideoCallItem = ({ item }) => {
+    const documentTitle = item.request_details?.document_details?.title || t('noDocumentTitle');
+    const scheduledTime = formatDateTime(item.scheduled_time);
+    const isPast = new Date(item.scheduled_time) < new Date();
+    
+    return (
+      <Card style={styles.card}>
+        <Card.Content>
+          <Text style={styles.documentTitle}>{documentTitle}</Text>
+          <View style={styles.infoRow}>
+            <Ionicons name="calendar-outline" size={18} color="#555" />
+            <Text style={styles.infoText}>{scheduledTime}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Ionicons name="person-outline" size={18} color="#555" />
+            <Text style={styles.infoText}>
+              {item.request_details?.user_details?.full_name || t('unknown')}
+            </Text>
+          </View>
+          <View style={styles.statusContainer}>
+            <Chip 
+              mode="outlined" 
+              style={[styles.statusChip, {
+                backgroundColor: isPast ? theme.colors.surface : theme.colors.primary + '10'
+              }]}
+            >
+              {isPast ? t('past') : t('upcoming')}
+            </Chip>
+          </View>
+        </Card.Content>
+        <Card.Actions style={styles.cardActions}>
+          <Button 
+            mode="contained" 
+            onPress={() => handleJoinCall(item.room_url)}
+            disabled={false} // Set this to isPast if you want to disable past calls
+          >
+            {t('joinCall')}
+          </Button>
+        </Card.Actions>
+      </Card>
+    );
+  };
+
   // Render empty state
   const renderEmptyList = () => {
+    if (error) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="alert-circle-outline" size={60} color="#ff8a65" />
+          <Text style={styles.emptyText}>{t('error')}</Text>
+          <Text style={styles.emptySubtext}>{error}</Text>
+          <Button 
+            mode="contained" 
+            onPress={loadVideoCalls}
+            style={styles.retryButton}
+          >
+            {t('retry')}
+          </Button>
+        </View>
+      );
+    }
+    
     if (searchQuery || activeFilter !== 'all') {
       return (
         <View style={styles.emptyContainer}>
@@ -226,13 +234,6 @@ const VideoCallsScreen = ({ navigation }) => {
         <Ionicons name="videocam-outline" size={60} color="#bbb" />
         <Text style={styles.emptyText}>{t('noCallsScheduled')}</Text>
         <Text style={styles.emptySubtext}>{t('tapToSchedule')}</Text>
-        {/* <Button 
-          mode="contained" 
-          onPress={() => Alert.alert('Coming Soon', 'Schedule call feature will be available soon.')}
-          style={styles.scheduleButton}
-        >
-          {t('scheduleCall')}
-        </Button> */}
       </View>
     );
   };
@@ -257,14 +258,7 @@ const VideoCallsScreen = ({ navigation }) => {
       
       <FlatList
         data={filteredCalls}
-        renderItem={({ item }) => (
-          <VideoCallItem 
-            call={item}
-            onJoin={() => handleJoinCall(item.id)}
-            onReschedule={() => handleRescheduleCall(item.id)}
-            onCancel={() => handleCancelCall(item.id)}
-          />
-        )}
+        renderItem={renderVideoCallItem}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={renderEmptyList}
@@ -276,7 +270,6 @@ const VideoCallsScreen = ({ navigation }) => {
           />
         }
       />
-      
     </SafeAreaView>
   );
 };
@@ -326,9 +319,39 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
-  // scheduleButton: {
-  //   marginTop: 16,
-  // },
+  retryButton: {
+    marginTop: 16,
+  },
+  card: {
+    marginBottom: 16,
+    borderRadius: 8,
+  },
+  documentTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  infoRow: {
+    flexDirection: 'row', 
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 8,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  statusChip: {
+    height: 28,
+  },
+  cardActions: {
+    justifyContent: 'flex-end',
+    paddingTop: 0,
+  },
 });
 
 export default VideoCallsScreen;

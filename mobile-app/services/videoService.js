@@ -1,30 +1,4 @@
 import api from './api';
-import io from 'socket.io-client';
-import { RTCPeerConnection, RTCSessionDescription } from 'react-native-webrtc';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Socket.io instance
-let socket = null;
-
-// WebRTC peer connection
-let peerConnection = null;
-
-// Initialize video service
-export const initializeVideoService = async () => {
-  try {
-    // Connect to signaling server
-    socket = io('https://signaling.yournotaryservice.com', {
-      auth: {
-        token: await AsyncStorage.getItem('token')
-      }
-    });
-    
-    return true;
-  } catch (error) {
-    console.error('Error initializing video service:', error);
-    throw error;
-  }
-};
 
 // Fetch all video sessions
 export const fetchVideoSessions = async () => {
@@ -56,7 +30,7 @@ export const createVideoSession = async (requestId, scheduledTime) => {
   }
 };
 
-// Join a video session
+// Join a video session - just returns session details with room URL
 export const joinVideoSession = async (sessionId) => {
   try {
     return await api.get(`/api/sessions/${sessionId}/join/`);
@@ -198,158 +172,6 @@ export const cancelVideoCall = async (id, reason) => {
       data: { reason }
     });
   } catch (error) {
-    throw error;
-  }
-};
-
-// Join a video call
-export const joinVideoCall = async (callId) => {
-  try {
-    // Initialize WebRTC connection
-    peerConnection = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        {
-          urls: 'turn:turn.yournotaryservice.com',
-          username: 'turnuser',
-          credential: 'turnpassword'
-        }
-      ]
-    });
-    
-    // Connect to the call room
-    socket.emit('join-call', { callId });
-    
-    // Set up event listeners
-    setupSocketListeners(callId);
-    setupPeerConnectionListeners();
-    
-    return true;
-  } catch (error) {
-    console.error('Error joining video call:', error);
-    throw error;
-  }
-};
-
-// Setup socket listeners
-const setupSocketListeners = (callId) => {
-  // Handle new user joining
-  socket.on('user-joined', async (data) => {
-    try {
-      // Create offer
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
-      
-      // Send offer to other user
-      socket.emit('offer', {
-        callId,
-        targetUserId: data.userId,
-        offer: peerConnection.localDescription
-      });
-    } catch (error) {
-      console.error('Error creating offer:', error);
-    }
-  });
-  
-  // Handle receiving offer
-  socket.on('offer', async (data) => {
-    try {
-      // Set remote description
-      await peerConnection.setRemoteDescription(
-        new RTCSessionDescription(data.offer)
-      );
-      
-      // Create answer
-      const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
-      
-      // Send answer back
-      socket.emit('answer', {
-        callId,
-        targetUserId: data.userId,
-        answer: peerConnection.localDescription
-      });
-    } catch (error) {
-      console.error('Error handling offer:', error);
-    }
-  });
-  
-  // Handle receiving answer
-  socket.on('answer', async (data) => {
-    try {
-      await peerConnection.setRemoteDescription(
-        new RTCSessionDescription(data.answer)
-      );
-    } catch (error) {
-      console.error('Error handling answer:', error);
-    }
-  });
-  
-  // Handle ICE candidate
-  socket.on('ice-candidate', async (data) => {
-    try {
-      await peerConnection.addIceCandidate(data.candidate);
-    } catch (error) {
-      console.error('Error adding ICE candidate:', error);
-    }
-  });
-  
-  // Handle user leaving
-  socket.on('user-left', (data) => {
-    // Handle user disconnection
-    console.log('User left:', data.userId);
-  });
-  
-  // Handle call ended
-  socket.on('call-ended', () => {
-    // Handle call termination
-    endVideoCall();
-  });
-};
-
-// Setup peer connection listeners
-const setupPeerConnectionListeners = () => {
-  // Handle ICE candidate generation
-  peerConnection.onicecandidate = (event) => {
-    if (event.candidate) {
-      socket.emit('ice-candidate', {
-        callId,
-        candidate: event.candidate
-      });
-    }
-  };
-  
-  // Handle connection state changes
-  peerConnection.onconnectionstatechange = (event) => {
-    console.log('Connection state:', peerConnection.connectionState);
-  };
-  
-  // Handle remote stream
-  peerConnection.ontrack = (event) => {
-    // Handle remote stream
-    // In a real app, you would update the UI with this stream
-    console.log('Received remote track');
-    return event.streams[0];
-  };
-};
-
-// End the video call
-export const endVideoCall = () => {
-  try {
-    // Close peer connection
-    if (peerConnection) {
-      peerConnection.close();
-      peerConnection = null;
-    }
-    
-    // Disconnect from call room
-    if (socket) {
-      socket.emit('leave-call', { callId });
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error ending video call:', error);
     throw error;
   }
 };
