@@ -6,7 +6,7 @@ import { Platform } from 'react-native';
 import axiosHttpsProxyFix from 'axios-https-proxy-fix';
 
 // Установите базовый URL на ваш Django бэкенд
-const API_BASE_URL = 'https://mynotary-app.online/notary';
+export const API_BASE_URL = 'https://mynotary-app.online/notary';
 
 // Configure axios with SSL handling for development
 let axiosConfig = {
@@ -15,7 +15,7 @@ let axiosConfig = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  timeout: Platform.OS === 'android' ? 30000 : 15000,
+  timeout: 30000,
 };
 
 // Special handling for iOS in development
