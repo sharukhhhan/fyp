@@ -863,9 +863,6 @@ class AIChatView(APIView):
             'session_id': session_id,
             'document_id': session_data.get('document_id'),
             'is_ready': result['is_ready'],
-            'missing_info': result['missing_info'],
-            'remarks': result['remarks'],
-            'warnings': result['warnings'],
             'operation': 'chat'
         })
 
@@ -1057,11 +1054,11 @@ class AIChatView(APIView):
     def _replace_placeholders(self, text, user_data):
         return (
             text
-            .replace("{{full_name}}", user_data['full_name'])
-            .replace("{{document_number}}", user_data['document_number'])
-            .replace("{{date_of_birth}}", user_data['date_of_birth'])
-            .replace("{{issue_date}}", user_data['issue_date'])
-            .replace("{{expiry_date}}", user_data['expiry_date'] or "")
+            .replace("%full_name%", user_data['full_name'])
+            .replace("%document_number%", user_data['document_number'])
+            .replace("%date_of_birth%", user_data['date_of_birth'])
+            .replace("%issue_date%", user_data['issue_date'])
+            .replace("%expiry_date%", user_data['expiry_date'] or "")
         )
 
     def _handle_finalize_document(self, request, session_id, session_data):

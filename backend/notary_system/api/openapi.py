@@ -79,11 +79,11 @@ class OpenAIDocumentService:
 
     Эти данные УЖЕ ДОСТУПНЫ СИСТЕМЕ и будут автоматически вставлены в документ. Вам НЕ НУЖНО запрашивать эти данные у пользователя! Также в тексте не надо просить в текстом указать эти данные (Вроде [Укажите ФИО]).
     Данные пользователя автоматически вставляются в документ. Используйте следующие плейсхолдеры:
-- {{full_name}}
-- {{document_number}}
-- {{date_of_birth}}
-- {{issue_date}}
-- {{expiry_date}}
+- %full_name%
+- %document_number%
+- %date_of_birth%
+- %issue_date%
+- %expiry_date%
 
     В документы можно запрашивать только:
     1. Данные других лиц (ФИО третьих лиц, их реквизиты)
@@ -109,13 +109,14 @@ class OpenAIDocumentService:
             system_prompt = self.create_system_prompt(user_data, document_type, language)
             
             # Новый JSON-инструктаж
-            """
+            instruction = """
 Отвечай ТОЛЬКО в этом JSON-формате:
 {
   "is_ready": true | false,
   "message": "Что показать пользователю",
-  "document": "Полный текст документа, если готов"
 }
+В случае, если is_ready = true, то в message должен быть полный текст документа.
+Если is_ready = false, то в message должен быть текст от тебя, что нужно уточнить. 
     НЕ добавляй никаких пояснений до или после JSON. Только чистый JSON-объект.
     """
 
@@ -156,12 +157,12 @@ class OpenAIDocumentService:
 
             # Минимальная валидация
             parsed.setdefault('is_ready', False)
-            parsed.setdefault('document', '')
+            parsed.setdefault('message', '')
 
 
             return {
                 'success': True,
-                'content': parsed['document'],
+                'content': parsed['message'],
                 'is_document': parsed['is_ready'],
                 'is_ready': parsed['is_ready'],
                 'raw_response': raw_reply,
